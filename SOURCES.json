@@ -1,0 +1,406 @@
+{
+  "sources": [
+    {
+      "name": "ASCPdown",
+      "id": 894389133,
+      "private": false,
+      "head": "22c6a4b70cbbcbc7924118c0b3f43435db51e45a",
+      "default_branch": "master",
+      "prefix": "aspera",
+      "files": [
+        {
+          "path": "Ascp_down.py",
+          "sha": "2f38a4ea6b017889c88428b1a1c493a4cab16066",
+          "size": 2746,
+          "mode": "100644",
+          "target_path": "aspera/Ascp_down.py",
+          "public_blob_sha": "8d7a758c8dd45f47e74cdef60c87186bcd302b64",
+          "modified_for_integration": true
+        },
+        {
+          "path": "Ascpdown.py",
+          "sha": "03f56524da8ebb1b6fb19835952992985bc9e1cd",
+          "size": 1588,
+          "mode": "100644",
+          "target_path": "aspera/Ascpdown.py",
+          "public_blob_sha": "8a6168c07283db47c3b60cf5cc0d7daa211ecc44",
+          "modified_for_integration": true
+        },
+        {
+          "path": "FetachENAname.md",
+          "sha": "cbb66d1116ff3d5fa26cc6cfe6a2a127e44892fd",
+          "size": 290,
+          "mode": "100644",
+          "target_path": "aspera/FetachENAname.md",
+          "public_blob_sha": "cbb66d1116ff3d5fa26cc6cfe6a2a127e44892fd",
+          "modified_for_integration": false
+        },
+        {
+          "path": "README.md",
+          "sha": "50e3f8bc8de36765844c4f656231a90b16a4a4c5",
+          "size": 2078,
+          "mode": "100644",
+          "target_path": "aspera/README.md",
+          "public_blob_sha": "51dac1faaee48fd1644e64c237618c5624e6c0a3",
+          "modified_for_integration": true
+        },
+        {
+          "path": "filereport_read_run_PRJNA727602_tsv.txt",
+          "sha": "f408cb4e61afcf62cf7dfd787f86dddaacd9d6ef",
+          "size": 939,
+          "mode": "100644",
+          "target_path": "aspera/filereport_read_run_PRJNA727602_tsv.txt",
+          "public_blob_sha": "f408cb4e61afcf62cf7dfd787f86dddaacd9d6ef",
+          "modified_for_integration": false
+        }
+      ]
+    },
+    {
+      "name": "Novogene_DownloadWeb",
+      "id": 1037380354,
+      "private": false,
+      "head": "b8514cb560174aea94336d6533914d7ad2c03c60",
+      "default_branch": "master",
+      "prefix": "novogene",
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha": "08dee7c5de6e1d70d97f59ac146dd7bd5ac22ff5",
+          "size": 904,
+          "mode": "100644",
+          "target_path": "novogene/.gitignore",
+          "public_blob_sha": "08dee7c5de6e1d70d97f59ac146dd7bd5ac22ff5",
+          "modified_for_integration": false
+        },
+        {
+          "path": "ENVIRONMENT_GUIDE.md",
+          "sha": "4ba3e0bd65186e71124ae0e982c46e459b20b2f0",
+          "size": 7068,
+          "mode": "100644",
+          "target_path": "novogene/ENVIRONMENT_GUIDE.md",
+          "public_blob_sha": "eb8b08b9fe9f9d11133dced12cfdc8b1264d2edf",
+          "modified_for_integration": true
+        },
+        {
+          "path": "README.md",
+          "sha": "4ee9ba7096e9bb071ceef2dd9ef79c26dc74208c",
+          "size": 5755,
+          "mode": "100644",
+          "target_path": "novogene/README.md",
+          "public_blob_sha": "871e15510ef0258d7586121ec509ff111d213fab",
+          "modified_for_integration": true
+        },
+        {
+          "path": "app.py",
+          "sha": "3228776ffb02b598670c4d5728ac3f7c2d70365c",
+          "size": 19171,
+          "mode": "100644",
+          "target_path": "novogene/app.py",
+          "public_blob_sha": "5a4ff45a8dfe0c3dfd574b0fe2b9ac0cc9190840",
+          "modified_for_integration": true
+        },
+        {
+          "path": "config/settings.py",
+          "sha": "d92f167694d2bc3268a9a142b974fee52a1729e7",
+          "size": 2298,
+          "mode": "100644",
+          "target_path": "novogene/config/settings.py",
+          "public_blob_sha": "9ba7af7f62c8377f085cafb22f2f49411687f628",
+          "modified_for_integration": true
+        },
+        {
+          "path": "data/.gitkeep",
+          "sha": "2b92ea6f0cdd382ee5ba9265c9ff4be2ac216ee9",
+          "size": 75,
+          "mode": "100644",
+          "target_path": "novogene/data/.gitkeep",
+          "public_blob_sha": "2b92ea6f0cdd382ee5ba9265c9ff4be2ac216ee9",
+          "modified_for_integration": false
+        },
+        {
+          "path": "environment.yml",
+          "sha": "1ca96bb5c08e522af13da5fdc2ab01a09d9043cc",
+          "size": 258,
+          "mode": "100644",
+          "target_path": "novogene/environment.yml",
+          "public_blob_sha": "e3b3005d08e9f813ee8a98b1ad1daa9a333dfbf5",
+          "modified_for_integration": true
+        },
+        {
+          "path": "logs/.gitkeep",
+          "sha": "a44dae6f1c6dfb69769f28019b90d506a0020feb",
+          "size": 75,
+          "mode": "100644",
+          "target_path": "novogene/logs/.gitkeep",
+          "public_blob_sha": "a44dae6f1c6dfb69769f28019b90d506a0020feb",
+          "modified_for_integration": false
+        },
+        {
+          "path": "requirements.txt",
+          "sha": "1e0a9feca074c0ce1351c18d181b83fbcb4940cc",
+          "size": 108,
+          "mode": "100644",
+          "target_path": "novogene/requirements.txt",
+          "public_blob_sha": "c2087d5f65e2e0541571adf1406d334eba347ce4",
+          "modified_for_integration": true
+        },
+        {
+          "path": "run.py",
+          "sha": "3e09bf66a2c5c259be74148ac502a09e4c7bdb0a",
+          "size": 286,
+          "mode": "100755",
+          "target_path": "novogene/run.py",
+          "public_blob_sha": "3e09bf66a2c5c259be74148ac502a09e4c7bdb0a",
+          "modified_for_integration": false
+        },
+        {
+          "path": "run_app.sh",
+          "sha": "4ab31b4e072a5525637c4ef7bddf0ce30d99ae15",
+          "size": 2053,
+          "mode": "100755",
+          "target_path": "novogene/run_app.sh",
+          "public_blob_sha": "8910b46c3341240730778687f02f918a0f9a6a30",
+          "modified_for_integration": true
+        },
+        {
+          "path": "scripts/__init__.py",
+          "sha": "d10eff24c964923a262509a4f662f474ab0c2463",
+          "size": 36,
+          "mode": "100644",
+          "target_path": "novogene/scripts/__init__.py",
+          "public_blob_sha": "d10eff24c964923a262509a4f662f474ab0c2463",
+          "modified_for_integration": false
+        },
+        {
+          "path": "scripts/activate_env.sh",
+          "sha": "65d2b7481b9c09cfa6ca14fb118bd0916f770c90",
+          "size": 511,
+          "mode": "100755",
+          "target_path": "novogene/scripts/activate_env.sh",
+          "public_blob_sha": "65d2b7481b9c09cfa6ca14fb118bd0916f770c90",
+          "modified_for_integration": false
+        },
+        {
+          "path": "scripts/download_manager.py",
+          "sha": "16345a77304a50a2e42600c446df4580b9c0bc7d",
+          "size": 14118,
+          "mode": "100644",
+          "target_path": "novogene/scripts/download_manager.py",
+          "public_blob_sha": "169e335c67751d068bd0043c7a7e5cbf44cbec99",
+          "modified_for_integration": true
+        },
+        {
+          "path": "scripts/email_parser.py",
+          "sha": "c2dc708eda3420a2e925f41ae5b3145011f5d6ae",
+          "size": 6589,
+          "mode": "100644",
+          "target_path": "novogene/scripts/email_parser.py",
+          "public_blob_sha": "c2dc708eda3420a2e925f41ae5b3145011f5d6ae",
+          "modified_for_integration": false
+        },
+        {
+          "path": "scripts/env_manager.py",
+          "sha": "002524cdbad8bc2e69bac0fde7c7eb897abde44a",
+          "size": 8513,
+          "mode": "100755",
+          "target_path": "novogene/scripts/env_manager.py",
+          "public_blob_sha": "002524cdbad8bc2e69bac0fde7c7eb897abde44a",
+          "modified_for_integration": false
+        },
+        {
+          "path": "scripts/file_validator.py",
+          "sha": "ba7b9bdae438a2b8d4e4ba786f0e554d538b6791",
+          "size": 10175,
+          "mode": "100644",
+          "target_path": "novogene/scripts/file_validator.py",
+          "public_blob_sha": "19191776543136e6441f1cd88554d9480a7fecac",
+          "modified_for_integration": true
+        },
+        {
+          "path": "scripts/settings_manager.py",
+          "sha": "15f3a08f1464b5a004c580e09b783e0b234b69bf",
+          "size": 7931,
+          "mode": "100644",
+          "target_path": "novogene/scripts/settings_manager.py",
+          "public_blob_sha": "f7092698d60abf8300d3ba46af8856528513e4ef",
+          "modified_for_integration": true
+        },
+        {
+          "path": "scripts/setup_env.sh",
+          "sha": "3722d357ef01da258830f74a6008eb5b0a7e7fb6",
+          "size": 5635,
+          "mode": "100755",
+          "target_path": "novogene/scripts/setup_env.sh",
+          "public_blob_sha": "f3da4c206e3a046267b833e18d82ed9e298f4853",
+          "modified_for_integration": true
+        },
+        {
+          "path": "static/css/style.css",
+          "sha": "f8c82404031c91f5a8b3508bc1dff17e3ffbe18f",
+          "size": 8725,
+          "mode": "100644",
+          "target_path": "novogene/static/css/style.css",
+          "public_blob_sha": "f8c82404031c91f5a8b3508bc1dff17e3ffbe18f",
+          "modified_for_integration": false
+        },
+        {
+          "path": "static/js/main.js",
+          "sha": "2a5725945d8f3f5cb4dad1c3eb770bc82b3e8063",
+          "size": 20134,
+          "mode": "100644",
+          "target_path": "novogene/static/js/main.js",
+          "public_blob_sha": "2a5725945d8f3f5cb4dad1c3eb770bc82b3e8063",
+          "modified_for_integration": false
+        },
+        {
+          "path": "templates/base.html",
+          "sha": "90fc42598321894a691e416a0e28eff531d2e630",
+          "size": 11527,
+          "mode": "100644",
+          "target_path": "novogene/templates/base.html",
+          "public_blob_sha": "35c1ee80dd9df5ca743a291ab17e382c1c636062",
+          "modified_for_integration": true
+        },
+        {
+          "path": "templates/download.html",
+          "sha": "1bc5acf0d884d9b2063255e93072bd65849c03ca",
+          "size": 9796,
+          "mode": "100644",
+          "target_path": "novogene/templates/download.html",
+          "public_blob_sha": "dd9cb84d10e5fb618bba98eab8ed4efd57bc79ca",
+          "modified_for_integration": true
+        },
+        {
+          "path": "templates/error.html",
+          "sha": "0ad93c63da3441bb7ba43302c940763d4d634b1e",
+          "size": 1515,
+          "mode": "100644",
+          "target_path": "novogene/templates/error.html",
+          "public_blob_sha": "0ad93c63da3441bb7ba43302c940763d4d634b1e",
+          "modified_for_integration": false
+        },
+        {
+          "path": "templates/index.html",
+          "sha": "f233dc89eea139b9d2d23a39767beef4ac33a937",
+          "size": 30998,
+          "mode": "100644",
+          "target_path": "novogene/templates/index.html",
+          "public_blob_sha": "bfa838043a8050a3114587bddcc0b35364c0c5b0",
+          "modified_for_integration": true
+        },
+        {
+          "path": "templates/task_list.html",
+          "sha": "cc929a60814efcb6d68a0d72eb5742afe0935cac",
+          "size": 12581,
+          "mode": "100644",
+          "target_path": "novogene/templates/task_list.html",
+          "public_blob_sha": "cc929a60814efcb6d68a0d72eb5742afe0935cac",
+          "modified_for_integration": false
+        },
+        {
+          "path": "templates/task_status.html",
+          "sha": "57046a19630243dfc4bae36184577f42699cad85",
+          "size": 19082,
+          "mode": "100644",
+          "target_path": "novogene/templates/task_status.html",
+          "public_blob_sha": "57046a19630243dfc4bae36184577f42699cad85",
+          "modified_for_integration": false
+        },
+        {
+          "path": "templates/validation_result.html",
+          "sha": "6125710af76f3aef8648bf06468680af896b434c",
+          "size": 7202,
+          "mode": "100644",
+          "target_path": "novogene/templates/validation_result.html",
+          "public_blob_sha": "6125710af76f3aef8648bf06468680af896b434c",
+          "modified_for_integration": false
+        }
+      ]
+    },
+    {
+      "name": "synap",
+      "id": 913914100,
+      "private": true,
+      "head": "dcc1582d7e56019e006a665a93916ea810b4af72",
+      "default_branch": "master",
+      "prefix": "synapse/legacy",
+      "files": [
+        {
+          "path": "README.md",
+          "sha": "ad02815c4d8b121d3e20809b62b8973f3709ac0e",
+          "size": 7,
+          "mode": "100644",
+          "target_path": "synapse/legacy/README.md",
+          "public_blob_sha": "e6da2f00292ae91333ad0c5782a49a99bc860d09",
+          "modified_for_integration": true
+        },
+        {
+          "path": "synapseclient.py",
+          "sha": "822115d063dd8e3d24c189b0e37a561c328e2a28",
+          "size": 1426,
+          "mode": "100644",
+          "target_path": "synapse/legacy/download_synapse_legacy.py",
+          "public_blob_sha": "f678b96ca493031e22f1b99d412267ade0250717",
+          "modified_for_integration": true
+        }
+      ]
+    },
+    {
+      "name": "synapse-downloader",
+      "id": 1112142055,
+      "private": false,
+      "head": "be3cedfb431d9930b91f8b93ce472c69b880574f",
+      "default_branch": "master",
+      "prefix": "synapse",
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha": "eda78147a91d4bc9d6648e2c33e216b36a39d7e8",
+          "size": 320,
+          "mode": "100644",
+          "target_path": "synapse/.gitignore",
+          "public_blob_sha": "eda78147a91d4bc9d6648e2c33e216b36a39d7e8",
+          "modified_for_integration": false
+        },
+        {
+          "path": "README.md",
+          "sha": "8d9ac14f1e779ce5d8a944898b6bc6b70a93bede",
+          "size": 1581,
+          "mode": "100644",
+          "target_path": "synapse/README.md",
+          "public_blob_sha": "8e8d11d19eb41a74e06c9049b27243c6a130e1f6",
+          "modified_for_integration": true
+        },
+        {
+          "path": "download_synapse_safe.py",
+          "sha": "c58004a9d8ebd8abe99f696ee464f7e3d6ef7daa",
+          "size": 7288,
+          "mode": "100644",
+          "target_path": "synapse/download_synapse_safe.py",
+          "public_blob_sha": "e15b8ea6c011e0cfbc06f0044e696aee00131d70",
+          "modified_for_integration": true
+        },
+        {
+          "path": "env.example.txt",
+          "sha": "2c27efe048cc857c1880d40b87634a0f2fc57b64",
+          "size": 234,
+          "mode": "100644",
+          "target_path": "synapse/env.example.txt",
+          "public_blob_sha": "2c27efe048cc857c1880d40b87634a0f2fc57b64",
+          "modified_for_integration": false
+        }
+      ]
+    }
+  ],
+  "integration_notes": [
+    "Original git histories retained in local verified git bundles by the owner.",
+    "Public import uses source snapshots; embedded private credential removed.",
+    "Launcher, README and module dependency files added.",
+    "Personal deployment paths replaced with configurable defaults.",
+    "Aspera relative paths, argv execution and failure exits corrected.",
+    "Synapse CLI arguments, recursive errors and path validation added.",
+    "Novogene missing imports, subprocess argv and process-wide directory changes corrected.",
+    "Legacy Synapse download list now reads the SDK CSV manifest with file IDs and versions; list entries remain intact.",
+    "Novogene MD5 failures now prevent successful task completion."
+  ]
+}

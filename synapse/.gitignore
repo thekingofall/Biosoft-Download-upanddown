@@ -1,0 +1,35 @@
+# 环境变量和敏感信息
+.env
+*.env
+
+# 下载的数据文件
+downloaded_data/
+Terekhova_syn49637038/
+syn61592786_scRNA/
+*.rds
+*.h5ad
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志和输出
+*.log
+output.txt
+

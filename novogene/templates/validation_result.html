@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}文件验证 - {{ task.info.username }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="bi bi-shield-check"></i>
+        文件验证结果
+    </h2>
+    <div>
+        <a href="{{ url_for('task_status', task_id=task_id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            返回任务
+        </a>
+        <button class="btn btn-outline-primary" onclick="downloadReport()">
+            <i class="bi bi-download"></i>
+            下载报告
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 验证报告 -->
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-earmark-check"></i>
+                    验证报告
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="validation-report">
+                    <pre class="bg-light p-3 rounded" style="max-height: 600px; overflow-y: auto; font-size: 14px; line-height: 1.4;">{{ report }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作按钮 -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="d-grid">
+            <button class="btn btn-primary" onclick="openDownloadDirectory()">
+                <i class="bi bi-folder-open"></i>
+                打开下载目录
+            </button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="d-grid">
+            <button class="btn btn-success" onclick="revalidateFiles()">
+                <i class="bi bi-arrow-clockwise"></i>
+                重新验证
+            </button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="d-grid">
+            <a href="{{ url_for('task_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-task"></i>
+                返回任务列表
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 任务信息摘要 -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    任务信息
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td class="text-muted">任务ID</td>
+                        <td>{{ task_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">项目编号</td>
+                        <td>{{ task.info.username }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">数据大小</td>
+                        <td>{{ task.info.total_size or '未知' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">样品数量</td>
+                        <td>{{ task.info.sample_count or '未知' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">下载目录</td>
+                        <td class="text-break">{{ task.download_dir }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">完成时间</td>
+                        <td>{{ task.end_time | datetime }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    注意事项
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>验证报告显示了下载文件的统计信息和MD5校验结果</li>
+                    <li>如果MD5验证失败，建议重新下载对应文件</li>
+                    <li>空文件可能表示下载过程中出现了问题</li>
+                    <li>请确保所有重要文件都已正确下载</li>
+                    <li>建议定期备份重要的下载数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function downloadReport() {
+    const reportContent = document.querySelector('.validation-report pre').textContent;
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `validation_report_{{ task_id }}_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function openDownloadDirectory() {
+    const directory = '{{ task.download_dir }}';
+    
+    // 尝试使用文件管理器打开目录
+    if (confirm(`下载目录: ${directory}\n\n点击确定复制路径到剪贴板`)) {
+        navigator.clipboard.writeText(directory).then(function() {
+            alert('目录路径已复制到剪贴板');
+        }, function(err) {
+            console.error('无法复制到剪贴板: ', err);
+            // 创建一个临时输入框来复制文本
+            const textArea = document.createElement('textarea');
+            textArea.value = directory;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('目录路径已复制到剪贴板');
+        });
+    }
+}
+
+function revalidateFiles() {
+    if (confirm('确定要重新验证文件吗？这可能需要一些时间。')) {
+        // 显示加载提示
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> 验证中...';
+        button.disabled = true;
+        
+        // 重新加载页面来触发验证
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+}
+
+// 高亮显示验证报告中的关键信息
+document.addEventListener('DOMContentLoaded', function() {
+    const reportPre = document.querySelector('.validation-report pre');
+    let content = reportPre.innerHTML;
+    
+    // 高亮显示重要信息
+    content = content.replace(/验证通过: (\d+)/g, '验证通过: <span class="text-success fw-bold">$1</span>');
+    content = content.replace(/验证失败: (\d+)/g, '验证失败: <span class="text-danger fw-bold">$1</span>');
+    content = content.replace(/总文件数: (\d+)/g, '总文件数: <span class="text-primary fw-bold">$1</span>');
+    content = content.replace(/总大小: ([^\n]+)/g, '总大小: <span class="text-info fw-bold">$1</span>');
+    
+    reportPre.innerHTML = content;
+});
+</script>
+{% endblock %}

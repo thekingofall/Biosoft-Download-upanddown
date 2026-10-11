@@ -1,0 +1,5 @@
+run_accession	sample_accession	experiment_accession	study_accession	tax_id	scientific_name	fastq_ftp	submitted_ftp	sra_ftp	bam_ftp
+SRR14436592	SAMN19026082	SRX10787708	PRJNA727602	9606	Homo sapiens	ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/092/SRR14436592/SRR14436592_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/092/SRR14436592/SRR14436592_2.fastq.gz		ftp.sra.ebi.ac.uk/vol1/srr/SRR144/092/SRR14436592	
+SRR14436594	SAMN19026082	SRX10787708	PRJNA727602	9606	Homo sapiens	ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/094/SRR14436594/SRR14436594_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/094/SRR14436594/SRR14436594_2.fastq.gz		ftp.sra.ebi.ac.uk/vol1/srr/SRR144/094/SRR14436594	
+SRR14436597	SAMN19026079	SRX10787710	PRJNA727602	9606	Homo sapiens	ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/097/SRR14436597/SRR14436597_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR144/097/SRR14436597/SRR14436597_2.fastq.gz		ftp.sra.ebi.ac.uk/vol1/srr/SRR144/097/SRR14436597	
+

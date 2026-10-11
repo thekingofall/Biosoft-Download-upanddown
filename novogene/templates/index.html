@@ -1,0 +1,733 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 诺禾云数据下载管理器{% endblock %}
+
+{% block extra_head %}
+<style>
+.settings-modal .modal-dialog {
+    max-width: 800px;
+}
+.validation-result {
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+.validation-success {
+    background-color: #d1e7dd;
+    border: 1px solid #badbcc;
+    color: #0f5132;
+}
+.validation-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    color: #842029;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 初始设置弹窗 -->
+{% if is_first_run %}
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="settingsModalLabel">
+                    <i class="bi bi-gear"></i>
+                    初始设置
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    欢迎使用诺禾云数据下载管理器！请先配置基本设置，然后开始使用。
+                </div>
+                
+                <form id="settingsForm">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="lnd_cmd_path" class="form-label">
+                                <i class="bi bi-terminal"></i>
+                                lnd命令路径 *
+                            </label>
+                            <input type="text" class="form-control" id="lnd_cmd_path" name="lnd_cmd_path" 
+                                   value="{{ current_settings.lnd_cmd_path }}" required>
+                            <div class="form-text">lnd命令的完整路径，用于连接诺禾云</div>
+                            <div class="invalid-feedback" id="lnd_cmd_path_error"></div>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="default_download_dir" class="form-label">
+                                <i class="bi bi-folder"></i>
+                                默认下载目录 *
+                            </label>
+                            <input type="text" class="form-control" id="default_download_dir" name="default_download_dir" 
+                                   value="{{ current_settings.default_download_dir }}" required>
+                            <div class="form-text">下载文件的默认保存位置</div>
+                            <div class="invalid-feedback" id="default_download_dir_error"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="max_concurrent_tasks" class="form-label">
+                                <i class="bi bi-layers"></i>
+                                最大并发任务数
+                            </label>
+                            <select class="form-select" id="max_concurrent_tasks" name="max_concurrent_tasks">
+                                {% for i in range(1, 11) %}
+                                <option value="{{ i }}" {% if i == current_settings.max_concurrent_tasks %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">同时运行的下载任务数量</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-check-square"></i>
+                                默认选项
+                            </label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto_validate" name="auto_validate" 
+                                       {% if current_settings.auto_validate %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_validate">
+                                    自动验证文件
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="generate_report" name="generate_report" 
+                                       {% if current_settings.generate_report %}checked{% endif %}>
+                                <label class="form-check-label" for="generate_report">
+                                    生成下载报告
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>注意：</strong>请确保lnd命令路径正确且有执行权限，下载目录有写入权限。
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="useDefaultSettings()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    使用默认设置
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                    <i class="bi bi-check"></i>
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-envelope-open"></i>
+                    邮件解析
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    请将诺禾云发送的数据下载邮件内容粘贴到下面的文本框中，系统将自动解析登录信息并创建下载任务。
+                </p>
+
+                <form method="POST" action="{{ url_for('parse_email') }}" id="emailForm">
+                    <div class="mb-3">
+                        <label for="email_text" class="form-label">
+                            <i class="bi bi-file-text"></i>
+                            邮件内容
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="email_text" 
+                            name="email_text" 
+                            rows="15" 
+                            placeholder="请粘贴诺禾云邮件内容，例如：
+
+数据下载权限开启期限：30个自然日...
+数据路径为：CP2024121200080/H101SC24127971/RSSQ01804/X101SC24127971-Z01/X101SC24127971-Z01-J083/
+登录账号：X101SC24127971-Z01-J083
+登录密码：cfyyu3cy
+数据释放日期：2025-08-05
+数据有效期至：2025-09-04
+..."
+                            required
+                        ></textarea>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            系统将自动提取其中的登录账号、密码、数据路径等信息
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search"></i>
+                            解析邮件并配置下载
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-question-circle"></i>
+                    使用说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-1-circle text-primary"></i> 邮件解析</h6>
+                        <p class="small text-muted">
+                            将诺禾云发送的邮件内容完整粘贴到文本框中，系统会自动提取登录信息。
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-2-circle text-primary"></i> 确认信息</h6>
+                        <p class="small text-muted">
+                            系统解析后会显示提取的信息，请确认无误后开始下载。
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-3-circle text-primary"></i> 下载管理</h6>
+                        <p class="small text-muted">
+                            可以在任务列表中查看下载进度，支持取消和重新下载。
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-4-circle text-primary"></i> 文件验证</h6>
+                        <p class="small text-muted">
+                            下载完成后会自动进行MD5校验，确保文件完整性。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速示例 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightbulb"></i>
+                    邮件示例
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">诺禾云邮件通常包含以下信息：</p>
+                <div class="bg-light p-3 rounded">
+                    <code class="small">
+                        数据路径为：CP2024121200080/H101SC24127971/...<br>
+                        登录账号：X101SC24127971-Z01-J083<br>
+                        登录密码：cfyyu3cy<br>
+                        数据释放日期：2025-08-05<br>
+                        数据有效期至：2025-09-04<br>
+                        交付文件总大小: 7.75 G<br>
+                        样品个数: 5 个<br>
+                        样品名称: TCRAB_AD,smRNA_8,smRNA_5,smRNA_7,smRNA_6
+                    </code>
+                </div>
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="fillExample()">
+                    <i class="bi bi-clipboard"></i>
+                    使用示例数据
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 初始设置弹窗 -->
+<div class="modal fade settings-modal" id="settingsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear"></i>
+                    初始设置
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    欢迎使用诺禾云数据下载管理器！请先配置系统设置以确保正常运行。
+                </div>
+
+                <form id="settingsForm">
+                    <!-- LND命令路径设置 -->
+                    <div class="mb-4">
+                        <label for="lndPath" class="form-label">
+                            <i class="bi bi-terminal"></i>
+                            LND命令路径
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="lndPath" 
+                                   placeholder="请输入LND命令的完整路径" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="browseLndPath()">
+                                <i class="bi bi-folder"></i>
+                                浏览
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="validateLndPath()">
+                                <i class="bi bi-check-circle"></i>
+                                验证
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            诺禾云下载工具lnd的完整路径，例如: /usr/local/bin/lnd
+                        </div>
+                        <div id="lndValidation" class="validation-result" style="display: none;"></div>
+                    </div>
+
+                    <!-- 默认下载目录设置 -->
+                    <div class="mb-4">
+                        <label for="downloadDir" class="form-label">
+                            <i class="bi bi-folder"></i>
+                            默认下载目录
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="downloadDir" 
+                                   placeholder="请输入默认下载目录" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="browseDownloadDir()">
+                                <i class="bi bi-folder"></i>
+                                浏览
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="validateDownloadDir()">
+                                <i class="bi bi-check-circle"></i>
+                                验证
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            数据文件的默认下载位置，系统会在此目录下创建子目录
+                        </div>
+                        <div id="dirValidation" class="validation-result" style="display: none;"></div>
+                    </div>
+
+                    <!-- 高级设置 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-sliders"></i>
+                                高级设置
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="maxTasks" class="form-label">最大并发任务数</label>
+                                    <input type="number" class="form-control" id="maxTasks" 
+                                           min="1" max="10" value="3">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="taskTimeout" class="form-label">任务超时时间(秒)</label>
+                                    <input type="number" class="form-control" id="taskTimeout" 
+                                           min="300" max="86400" value="3600">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoValidate" checked>
+                                        <label class="form-check-label" for="autoValidate">
+                                            自动验证文件完整性
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generateReport" checked>
+                                        <label class="form-check-label" for="generateReport">
+                                            生成下载报告
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统信息 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                系统信息
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="systemInfo" class="small text-muted">
+                                正在加载系统信息...
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="useDefaultSettings()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    使用默认设置
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveSettings()" id="saveBtn">
+                    <i class="bi bi-check-lg"></i>
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// 设置相关的全局变量
+let currentSettings = {};
+let settingsModal;
+
+// 页面加载时检查是否需要显示设置弹窗
+document.addEventListener('DOMContentLoaded', function() {
+    settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+    checkFirstRun();
+});
+
+// 检查是否为首次运行
+async function checkFirstRun() {
+    try {
+        const response = await fetch('/api/settings/check-first-run');
+        const data = await response.json();
+        
+        if (data.first_run) {
+            // 首次运行，显示设置弹窗
+            await loadCurrentSettings();
+            showSettingsModal();
+        }
+    } catch (error) {
+        console.error('检查首次运行状态失败:', error);
+    }
+}
+
+// 显示设置弹窗
+function showSettingsModal() {
+    settingsModal.show();
+    loadSystemInfo();
+}
+
+// 加载当前设置
+async function loadCurrentSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        currentSettings = await response.json();
+        
+        // 填充表单
+        document.getElementById('lndPath').value = currentSettings.lnd_cmd_path || '';
+        document.getElementById('downloadDir').value = currentSettings.default_download_dir || '';
+        document.getElementById('maxTasks').value = currentSettings.max_concurrent_tasks || 3;
+        document.getElementById('taskTimeout').value = currentSettings.task_timeout || 3600;
+        document.getElementById('autoValidate').checked = currentSettings.auto_validate !== false;
+        document.getElementById('generateReport').checked = currentSettings.generate_report !== false;
+        
+    } catch (error) {
+        console.error('加载设置失败:', error);
+    }
+}
+
+// 加载系统信息
+async function loadSystemInfo() {
+    try {
+        const response = await fetch('/api/settings/system-info');
+        const info = await response.json();
+        
+        const systemInfoDiv = document.getElementById('systemInfo');
+        systemInfoDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>操作系统:</strong> ${info.platform || 'Unknown'}<br>
+                    <strong>架构:</strong> ${info.architecture || 'Unknown'}<br>
+                    <strong>Python版本:</strong> ${info.python_version || 'Unknown'}
+                </div>
+                <div class="col-md-6">
+                    <strong>用户目录:</strong> ${info.home_dir || 'Unknown'}<br>
+                    <strong>当前目录:</strong> ${info.current_dir || 'Unknown'}<br>
+                    <strong>可用空间:</strong> ${formatFileSize(info.disk_usage?.free || 0)}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('加载系统信息失败:', error);
+        document.getElementById('systemInfo').innerHTML = '<span class="text-danger">加载系统信息失败</span>';
+    }
+}
+
+// 验证LND路径
+async function validateLndPath() {
+    const path = document.getElementById('lndPath').value.trim();
+    const validationDiv = document.getElementById('lndValidation');
+    
+    if (!path) {
+        showValidationResult(validationDiv, false, '请输入LND命令路径');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/settings/validate-lnd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: path })
+        });
+        
+        const result = await response.json();
+        showValidationResult(validationDiv, result.valid, result.message);
+        
+    } catch (error) {
+        console.error('验证LND路径失败:', error);
+        showValidationResult(validationDiv, false, '验证过程中出现错误');
+    }
+}
+
+// 验证下载目录
+async function validateDownloadDir() {
+    const path = document.getElementById('downloadDir').value.trim();
+    const validationDiv = document.getElementById('dirValidation');
+    
+    if (!path) {
+        showValidationResult(validationDiv, false, '请输入下载目录路径');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/settings/validate-dir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: path })
+        });
+        
+        const result = await response.json();
+        let message = result.message;
+        
+        if (result.valid && result.space_available) {
+            message += ` (可用空间: ${formatFileSize(result.space_available)})`;
+        }
+        
+        showValidationResult(validationDiv, result.valid, message);
+        
+    } catch (error) {
+        console.error('验证下载目录失败:', error);
+        showValidationResult(validationDiv, false, '验证过程中出现错误');
+    }
+}
+
+// 显示验证结果
+function showValidationResult(element, isValid, message) {
+    element.style.display = 'block';
+    element.className = isValid ? 'validation-result validation-success' : 'validation-result validation-error';
+    element.innerHTML = `<i class="bi bi-${isValid ? 'check-circle' : 'x-circle'}"></i> ${message}`;
+}
+
+// 浏览LND路径
+function browseLndPath() {
+    // 提供一些常见路径建议
+    const suggestions = [
+        '/usr/local/bin/lnd',
+        '/usr/bin/lnd',
+        '/usr/local/bin/lnd',
+        '/opt/lnd/lnd'
+    ];
+    
+    const pathInput = document.getElementById('lndPath');
+    const currentPath = pathInput.value.trim();
+    
+    // 显示路径建议
+    const suggestion = prompt(
+        '请输入LND命令路径，或从以下建议中选择:\\n\\n' + 
+        suggestions.map((path, index) => `${index + 1}. ${path}`).join('\\n') + 
+        '\\n\\n输入数字选择，或直接输入完整路径:',
+        currentPath
+    );
+    
+    if (suggestion) {
+        // 检查是否为数字选择
+        const num = parseInt(suggestion);
+        if (num >= 1 && num <= suggestions.length) {
+            pathInput.value = suggestions[num - 1];
+        } else {
+            pathInput.value = suggestion;
+        }
+        
+        // 自动验证
+        validateLndPath();
+    }
+}
+
+// 浏览下载目录
+function browseDownloadDir() {
+    const suggestions = [
+        './novogene/data',
+        '/data/novogene',
+        '/tmp/novogene',
+        './novogene/data'
+    ];
+    
+    const dirInput = document.getElementById('downloadDir');
+    const currentDir = dirInput.value.trim();
+    
+    const suggestion = prompt(
+        '请输入下载目录路径，或从以下建议中选择:\\n\\n' + 
+        suggestions.map((path, index) => `${index + 1}. ${path}`).join('\\n') + 
+        '\\n\\n输入数字选择，或直接输入完整路径:',
+        currentDir
+    );
+    
+    if (suggestion) {
+        const num = parseInt(suggestion);
+        if (num >= 1 && num <= suggestions.length) {
+            dirInput.value = suggestions[num - 1];
+        } else {
+            dirInput.value = suggestion;
+        }
+        
+        // 自动验证
+        validateDownloadDir();
+    }
+}
+
+// 使用默认设置
+function useDefaultSettings() {
+    if (confirm('确定要使用默认设置吗？这将覆盖当前的配置。')) {
+        document.getElementById('lndPath').value = {{ current_settings.lnd_cmd_path | tojson }};
+        document.getElementById('downloadDir').value = {{ current_settings.default_download_dir | tojson }};
+        document.getElementById('maxTasks').value = 3;
+        document.getElementById('taskTimeout').value = 3600;
+        document.getElementById('autoValidate').checked = true;
+        document.getElementById('generateReport').checked = true;
+        
+        // 清除验证结果
+        document.getElementById('lndValidation').style.display = 'none';
+        document.getElementById('dirValidation').style.display = 'none';
+    }
+}
+
+// 保存设置
+async function saveSettings() {
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+    
+    // 获取表单数据
+    const settings = {
+        lnd_cmd_path: document.getElementById('lndPath').value.trim(),
+        default_download_dir: document.getElementById('downloadDir').value.trim(),
+        max_concurrent_tasks: parseInt(document.getElementById('maxTasks').value),
+        task_timeout: parseInt(document.getElementById('taskTimeout').value),
+        auto_validate: document.getElementById('autoValidate').checked,
+        generate_report: document.getElementById('generateReport').checked,
+        first_run: false
+    };
+    
+    // 基本验证
+    if (!settings.lnd_cmd_path || !settings.default_download_dir) {
+        alert('请填写必要的路径信息');
+        return;
+    }
+    
+    // 显示保存状态
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+    saveBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 保存成功
+            settingsModal.hide();
+            
+            // 显示成功提示
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alert.innerHTML = `
+                <i class="bi bi-check-circle"></i>
+                设置保存成功！系统已配置完成。
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            // 自动移除提示
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+            
+        } else {
+            alert('保存设置失败: ' + (result.message || '未知错误'));
+        }
+        
+    } catch (error) {
+        console.error('保存设置失败:', error);
+        alert('保存设置时发生错误，请重试');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function fillExample() {
+    const exampleText = `数据下载权限开启期限：30个自然日，即数据释放30天后，云系统将自动关闭其下载权限。若您未及时下载或下载不完整，诺禾云交付系统将在数据到期前的10个自然日进行邮件提醒。
+若您收到相关邮件，请您及时下载并查看数据完整性（进行MD5值校验）。若有疑问，可及时与销售或运营经理联系处理，以确保数据准确交付。
+数据路径为：CP2024121200080/H101SC24127971/RSSQ01804/X101SC24127971-Z01/X101SC24127971-Z01-J083/
+登录账号：X101SC24127971-Z01-J083
+登录密码：cfyyu3cy
+数据释放日期：2025-08-05
+数据有效期至：2025-09-04
+距离数据下载权限关闭还有：30天
+送样批次信息：Z250717586
+备注信息：
+交付文件总大小: 7.75 G;
+样品个数: 5 个;
+样品名称: TCRAB_AD,smRNA_8,smRNA_5,smRNA_7,smRNA_6;`;
+    
+    document.getElementById('email_text').value = exampleText;
+}
+
+// 表单验证
+document.getElementById('emailForm').addEventListener('submit', function(e) {
+    const emailText = document.getElementById('email_text').value.trim();
+    
+    if (!emailText) {
+        e.preventDefault();
+        alert('请输入邮件内容');
+        return;
+    }
+    
+    // 检查是否包含必要信息
+    const requiredFields = ['登录账号', '登录密码', '数据路径'];
+    const missingFields = requiredFields.filter(field => !emailText.includes(field));
+    
+    if (missingFields.length > 0) {
+        const confirm = window.confirm(`邮件内容似乎缺少以下信息：${missingFields.join(', ')}。是否继续解析？`);
+        if (!confirm) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

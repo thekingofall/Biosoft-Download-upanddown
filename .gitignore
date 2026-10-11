@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+*.bundle
+*.log
+user_settings.json
+fastq_files/
+downloaded_data/
+novogene/data/*
+!novogene/data/.gitkeep
+novogene/logs/*
+!novogene/logs/.gitkeep
+.DS_Store
+Thumbs.db

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}确认下载 - 诺禾云数据下载管理器{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- 解析结果 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-check-circle"></i>
+                    邮件解析成功
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    系统已成功解析邮件内容，请确认以下信息无误后开始下载。
+                </p>
+
+                <div class="row">
+                    {% for key, value in info.items() %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body py-2">
+                                <div class="d-flex align-items-center">
+                                    <strong class="text-primary me-2">{{ key }}:</strong>
+                                    <span class="{% if value == '未提供' or value == '无' %}text-muted{% endif %}">
+                                        {{ value }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 下载配置 -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-gear"></i>
+                    下载配置
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('start_download') }}" id="downloadForm">
+                    <!-- 隐藏字段传递解析的信息 -->
+                    {% for key, value in raw_info.items() %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endfor %}
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="download_dir" class="form-label">
+                                <i class="bi bi-folder"></i>
+                                下载目录
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="download_dir" 
+                                name="download_dir" 
+                                value="{{ current_settings.default_download_dir if current_settings else './novogene/data/' }}"
+                                required
+                            >
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                系统将在此目录下创建以项目编号和时间戳命名的子目录
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-hdd"></i>
+                                预计空间占用
+                            </label>
+                            <div class="input-group">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    value="{{ raw_info.total_size if raw_info.total_size else '未知' }}" 
+                                    readonly
+                                >
+                                <span class="input-group-text">
+                                    <i class="bi bi-archive"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 高级选项 -->
+                    <div class="card border-0 bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-sliders"></i>
+                                高级选项
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="auto_validate" checked>
+                                        <label class="form-check-label" for="auto_validate">
+                                            自动验证文件完整性
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generate_report" checked>
+                                        <label class="form-check-label" for="generate_report">
+                                            生成下载报告
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="send_notification">
+                                        <label class="form-check-label" for="send_notification">
+                                            完成后发送通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-download"></i>
+                                    开始下载
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-arrow-left"></i>
+                                    返回修改
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('task_list') }}" class="btn btn-outline-primary btn-lg">
+                                    <i class="bi bi-list-task"></i>
+                                    查看任务
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    重要提示
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0 small">
+                    <li>请确保网络连接稳定，下载过程可能需要较长时间</li>
+                    <li>下载期间请勿关闭浏览器或断开网络连接</li>
+                    <li>数据下载权限有有效期限制，请及时下载</li>
+                    <li>建议在磁盘空间充足的目录进行下载</li>
+                    <li>下载完成后系统会自动验证文件完整性</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// 目录路径验证
+document.getElementById('download_dir').addEventListener('blur', function() {
+    const path = this.value.trim();
+    if (path && !path.startsWith('/')) {
+        alert('请输入绝对路径（以 / 开头）');
+        this.focus();
+    }
+});
+
+// 表单提交确认
+document.getElementById('downloadForm').addEventListener('submit', function(e) {
+    const downloadDir = document.getElementById('download_dir').value.trim();
+    const totalSize = '{{ raw_info.total_size }}';
+    
+    if (!downloadDir) {
+        e.preventDefault();
+        alert('请指定下载目录');
+        return;
+    }
+    
+    const message = `确认开始下载吗？\n\n` +
+                   `项目: {{ raw_info.username }}\n` +
+                   `大小: ${totalSize}\n` +
+                   `目录: ${downloadDir}\n\n` +
+                   `下载开始后将在任务列表中显示进度。`;
+    
+    if (!confirm(message)) {
+        e.preventDefault();
+    }
+});
+
+// 实时检查磁盘空间（如果需要的话）
+function checkDiskSpace() {
+    // 这里可以添加AJAX调用来检查磁盘空间
+    // 暂时省略，因为需要后端API支持
+}
+</script>
+{% endblock %}

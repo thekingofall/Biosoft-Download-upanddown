@@ -1,0 +1,2 @@
+-r novogene/requirements.txt
+-r synapse/requirements.txt

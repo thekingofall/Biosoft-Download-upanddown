@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}诺禾云数据下载管理器{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- 自定义CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-cloud-download"></i>
+                诺禾云下载管理器
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" 
+                           href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'task_list' %}active{% endif %}" 
+                           href="{{ url_for('task_list') }}">
+                            <i class="bi bi-list-task"></i> 任务列表
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSettingsModal()" title="系统设置">
+                            <i class="bi bi-gear"></i> 设置
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="container mt-4">
+        <!-- Flash消息 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {% if category == 'error' %}
+                            <i class="bi bi-exclamation-triangle"></i>
+                        {% elif category == 'success' %}
+                            <i class="bi bi-check-circle"></i>
+                        {% elif category == 'warning' %}
+                            <i class="bi bi-exclamation-circle"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 通用设置弹窗 -->
+    <div class="modal fade" id="globalSettingsModal" tabindex="-1" aria-labelledby="globalSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="globalSettingsModalLabel">
+                        <i class="bi bi-gear"></i>
+                        系统设置
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="globalSettingsForm">
+                        <!-- 基本设置 -->
+                        <div class="setting-group">
+                            <h6><i class="bi bi-sliders"></i> 基本设置</h6>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="global_lnd_path" class="form-label">
+                                        <i class="bi bi-terminal"></i>
+                                        LND命令路径
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="global_lnd_path" 
+                                               placeholder="/usr/local/bin/lnd">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="validateGlobalLndPath()">
+                                            <i class="bi bi-check-circle"></i>
+                                            验证
+                                        </button>
+                                    </div>
+                                    <div class="form-text">诺禾云下载工具的完整路径</div>
+                                    <div id="global_lnd_validation" class="validation-result" style="display: none;"></div>
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="global_download_dir" class="form-label">
+                                        <i class="bi bi-folder"></i>
+                                        默认下载目录
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="global_download_dir" 
+                                               placeholder="./novogene/data/">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="validateGlobalDownloadDir()">
+                                            <i class="bi bi-check-circle"></i>
+                                            验证
+                                        </button>
+                                    </div>
+                                    <div class="form-text">数据文件的默认保存位置</div>
+                                    <div id="global_dir_validation" class="validation-result" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 高级设置 -->
+                        <div class="setting-group">
+                            <h6><i class="bi bi-layers"></i> 高级设置</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="global_max_tasks" class="form-label">最大并发任务数</label>
+                                    <select class="form-select" id="global_max_tasks">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3" selected>3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="global_task_timeout" class="form-label">任务超时时间(秒)</label>
+                                    <input type="number" class="form-control" id="global_task_timeout" 
+                                           min="300" max="86400" value="3600">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="global_auto_validate" checked>
+                                        <label class="form-check-label" for="global_auto_validate">
+                                            自动验证文件完整性
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="global_generate_report" checked>
+                                        <label class="form-check-label" for="global_generate_report">
+                                            生成下载报告
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系统信息 -->
+                        <div class="setting-group">
+                            <h6><i class="bi bi-info-circle"></i> 系统信息</h6>
+                            <div id="global_system_info" class="system-info">
+                                正在加载系统信息...
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i>
+                        取消
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="resetGlobalSettings()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        重置默认
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveGlobalSettings()">
+                        <i class="bi bi-check"></i>
+                        保存设置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-light text-center py-3 mt-5">
+        <div class="container">
+            <small class="text-muted">
+                © 2024 诺禾云数据下载管理器 | 
+                <a href="https://github.com" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-github"></i> GitHub
+                </a>
+            </small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}任务详情 - {{ task.info.username }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="bi bi-file-earmark-arrow-down"></i>
+        任务详情
+    </h2>
+    <div>
+        <a href="{{ url_for('task_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            返回列表
+        </a>
+        <button class="btn btn-outline-primary" onclick="refreshStatus()">
+            <i class="bi bi-arrow-clockwise"></i>
+            刷新
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 任务状态卡片 -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    任务状态
+                </h5>
+                <span class="badge bg-{{ task.status.value | status_badge }} fs-6" id="statusBadge">
+                    {{ task.status.value | title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <!-- 进度显示 -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between">
+                        <span id="currentStep">{{ task.current_step or '等待开始' }}</span>
+                        <span id="progressText">{{ "%.1f" | format(task.progress) }}%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 12px;">
+                        <div class="progress-bar progress-bar-striped {% if task.status.value in ['downloading', 'logging_in', 'listing', 'validating'] %}progress-bar-animated{% endif %}" 
+                             id="progressBar"
+                             style="width: {{ task.progress }}%"></div>
+                    </div>
+                </div>
+
+                <!-- 基本信息 -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">任务ID</label>
+                        <div class="fw-bold">{{ task_id }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">项目编号</label>
+                        <div class="fw-bold">{{ task.info.username }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">开始时间</label>
+                        <div id="startTime">{{ task.start_time | datetime }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small text-muted">完成时间</label>
+                        <div id="endTime">{{ task.end_time | datetime if task.end_time else '进行中' }}</div>
+                    </div>
+                </div>
+
+                <!-- 错误信息 -->
+                <div id="errorMessage" {% if not task.error_message %}style="display: none;"{% endif %}>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span id="errorText">{{ task.error_message }}</span>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="btn-group w-100 mt-3" id="actionButtons">
+                    {% if task.status.value in ['pending', 'logging_in', 'listing', 'downloading', 'validating'] %}
+                    <button class="btn btn-warning" onclick="cancelTask()">
+                        <i class="bi bi-stop-circle"></i>
+                        取消任务
+                    </button>
+                    {% endif %}
+                    
+                    {% if task.status.value == 'completed' %}
+                    <a href="{{ url_for('validate_files', task_id=task_id) }}" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i>
+                        验证文件
+                    </a>
+                    {% endif %}
+                    
+                    {% if task.status.value in ['completed', 'failed', 'cancelled'] %}
+                    <button class="btn btn-danger" onclick="removeTask()">
+                        <i class="bi bi-trash"></i>
+                        删除任务
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 实时日志 -->
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-terminal"></i>
+                    实时日志
+                </h5>
+                <div>
+                    <span class="badge bg-secondary me-2" id="refreshStatus">自动刷新</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                        <i class="bi bi-trash"></i>
+                        清空
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="scrollToBottom()">
+                        <i class="bi bi-arrow-down"></i>
+                        底部
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="toggleAutoRefresh()" id="toggleRefreshBtn">
+                        <i class="bi bi-pause"></i>
+                        暂停
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="log-container" id="logContainer" style="height: 400px; overflow-y: auto; background: #1e1e1e; color: #fff; font-family: 'Courier New', monospace; font-size: 13px;">
+                    <div class="p-3" id="logContent">
+                        {% for log in task.log_messages %}
+                        <div class="log-line">{{ log }}</div>
+                        {% endfor %}
+                        {% if not task.log_messages %}
+                        <div class="text-muted">暂无日志...</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边栏信息 -->
+    <div class="col-lg-4">
+        <!-- 项目信息 -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-text"></i>
+                    项目信息
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">数据大小</small>
+                    <div class="fw-bold">{{ task.info.total_size or '未知' }}</div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">样品数量</small>
+                    <div class="fw-bold">{{ task.info.sample_count or '未知' }}</div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">有效期至</small>
+                    <div class="fw-bold">{{ task.info.expire_date or '未知' }}</div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">下载目录</small>
+                    <div class="small text-break">{{ task.download_dir }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 样品信息 -->
+        {% if task.info.sample_names %}
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-collection"></i>
+                    样品列表
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set samples = task.info.sample_names.split(',') %}
+                {% for sample in samples %}
+                <span class="badge bg-light text-dark me-1 mb-1">{{ sample.strip() }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 快速统计 -->
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i>
+                    统计信息
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <div class="h4 mb-0" id="elapsedTime">-</div>
+                            <small class="text-muted">已用时间</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0" id="estimatedTime">-</div>
+                        <small class="text-muted">预计剩余</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let statusUpdateInterval;
+let taskId = '{{ task_id }}';
+let autoRefreshEnabled = true;
+
+function startStatusUpdates() {
+    if (autoRefreshEnabled && !statusUpdateInterval) {
+        statusUpdateInterval = setInterval(updateTaskStatus, 2000); // 每2秒更新一次
+        updateRefreshStatus();
+    }
+}
+
+function stopStatusUpdates() {
+    if (statusUpdateInterval) {
+        clearInterval(statusUpdateInterval);
+        statusUpdateInterval = null;
+        updateRefreshStatus();
+    }
+}
+
+function toggleAutoRefresh() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    
+    if (autoRefreshEnabled) {
+        startStatusUpdates();
+    } else {
+        stopStatusUpdates();
+    }
+    
+    updateRefreshStatus();
+}
+
+function updateRefreshStatus() {
+    const statusElement = document.getElementById('refreshStatus');
+    const toggleBtn = document.getElementById('toggleRefreshBtn');
+    
+    if (statusUpdateInterval && autoRefreshEnabled) {
+        statusElement.textContent = '自动刷新中';
+        statusElement.className = 'badge bg-success me-2';
+        toggleBtn.innerHTML = '<i class="bi bi-pause"></i> 暂停';
+        toggleBtn.className = 'btn btn-sm btn-outline-warning';
+    } else {
+        statusElement.textContent = '已暂停';
+        statusElement.className = 'badge bg-secondary me-2';
+        toggleBtn.innerHTML = '<i class="bi bi-play"></i> 开始';
+        toggleBtn.className = 'btn btn-sm btn-outline-success';
+    }
+}
+
+function updateTaskStatus() {
+    fetch(`/api/task/${taskId}/status`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
+
+            // 检查任务是否已完成（增强检查）
+            const finishedStatuses = ['completed', 'failed', 'cancelled'];
+            const isFinished = data.is_finished || finishedStatuses.includes(data.status);
+            
+            // 更新状态徽章
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            statusBadge.className = `badge bg-${getStatusBadgeClass(data.status)} fs-6`;
+
+            // 更新进度
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressBar.style.width = data.progress + '%';
+            progressText.textContent = data.progress.toFixed(1) + '%';
+
+            // 更新当前步骤
+            document.getElementById('currentStep').textContent = data.current_step || '等待开始';
+
+            // 更新时间
+            if (data.end_time) {
+                document.getElementById('endTime').textContent = formatDateTime(data.end_time);
+            }
+
+            // 更新错误信息
+            const errorDiv = document.getElementById('errorMessage');
+            if (data.error_message) {
+                document.getElementById('errorText').textContent = data.error_message;
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+
+            // 更新日志
+            updateLogs(data.log_messages);
+
+            // 更新时间统计
+            updateTimeStats(data.start_time, data.end_time, data.progress);
+
+            // 如果任务完成，停止更新并移除动画效果
+            if (isFinished) {
+                console.log('任务已完成，停止自动刷新');
+                stopStatusUpdates();
+                
+                // 移除进度条动画效果
+                const progressBarElement = document.getElementById('progressBar');
+                if (progressBarElement) {
+                    progressBarElement.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                }
+                
+                updateActionButtons(data.status);
+                
+                // 显示完成提示
+                if (data.status === 'completed') {
+                    console.log('任务成功完成');
+                } else if (data.status === 'failed') {
+                    console.log('任务执行失败');
+                } else if (data.status === 'cancelled') {
+                    console.log('任务已取消');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Status update error:', error);
+            // 连续错误可能表示任务已完成，停止更新
+            if (error.name === 'TypeError' || error.message.includes('404')) {
+                console.log('检测到连接错误，可能任务已完成，停止刷新');
+                stopStatusUpdates();
+            }
+        });
+}
+
+function updateLogs(logs) {
+    const logContent = document.getElementById('logContent');
+    const currentLogs = logContent.querySelectorAll('.log-line');
+    
+    // 如果日志数量有变化，更新显示
+    if (logs.length !== currentLogs.length) {
+        logContent.innerHTML = '';
+        logs.forEach(log => {
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.textContent = log;
+            logContent.appendChild(logLine);
+        });
+        
+        // 自动滚动到底部
+        scrollToBottom();
+    }
+}
+
+function updateTimeStats(startTime, endTime, progress) {
+    const elapsedDiv = document.getElementById('elapsedTime');
+    const estimatedDiv = document.getElementById('estimatedTime');
+    
+    if (!startTime) {
+        elapsedDiv.textContent = '-';
+        estimatedDiv.textContent = '-';
+        return;
+    }
+    
+    const start = new Date(startTime);
+    const now = endTime ? new Date(endTime) : new Date();
+    const elapsed = Math.floor((now - start) / 1000);
+    
+    elapsedDiv.textContent = formatDuration(elapsed);
+    
+    if (!endTime && progress > 0) {
+        const estimated = Math.floor((elapsed / progress) * (100 - progress));
+        estimatedDiv.textContent = formatDuration(estimated);
+    } else {
+        estimatedDiv.textContent = '-';
+    }
+}
+
+function formatDuration(seconds) {
+    if (seconds < 60) return seconds + 's';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+    return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+}
+
+function formatDateTime(isoString) {
+    return new Date(isoString).toLocaleString('zh-CN');
+}
+
+function getStatusBadgeClass(status) {
+    const statusMap = {
+        'pending': 'secondary',
+        'logging_in': 'info',
+        'listing': 'info', 
+        'downloading': 'primary',
+        'validating': 'warning',
+        'completed': 'success',
+        'failed': 'danger',
+        'cancelled': 'dark'
+    };
+    return statusMap[status] || 'secondary';
+}
+
+function updateActionButtons(status) {
+    // 这里可以根据状态动态更新按钮
+    // 简化处理，直接重新加载页面
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+function refreshStatus() {
+    updateTaskStatus();
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('logContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+function clearLogs() {
+    if (confirm('确定要清空日志显示吗？（不会删除实际日志）')) {
+        document.getElementById('logContent').innerHTML = '<div class="text-muted">日志已清空...</div>';
+    }
+}
+
+function cancelTask() {
+    if (confirm('确定要取消这个下载任务吗？')) {
+        fetch(`/api/task/${taskId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('任务已取消');
+                location.reload();
+            } else {
+                alert('取消失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+function removeTask() {
+    if (confirm('确定要删除这个任务吗？删除后无法恢复。')) {
+        fetch(`/api/task/${taskId}/remove`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('任务已删除');
+                window.location.href = '{{ url_for("task_list") }}';
+            } else {
+                alert('删除失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+// 页面加载时启动状态更新
+document.addEventListener('DOMContentLoaded', function() {
+    // 检查任务状态，如果已完成则不启动自动刷新
+    const currentStatus = '{{ task.status.value }}';
+    const finishedStatuses = ['completed', 'failed', 'cancelled'];
+    
+    if (finishedStatuses.includes(currentStatus)) {
+        autoRefreshEnabled = false;
+        console.log('任务已完成，不启动自动刷新');
+    } else {
+        startStatusUpdates();
+    }
+    
+    updateRefreshStatus();
+    scrollToBottom();
+});
+
+// 页面卸载时停止更新
+window.addEventListener('beforeunload', function() {
+    stopStatusUpdates();
+});
+
+// 页面可见性变化时控制更新
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopStatusUpdates();
+    } else {
+        startStatusUpdates();
+    }
+});
+</script>
+{% endblock %}
